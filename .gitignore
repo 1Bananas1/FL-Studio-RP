@@ -1,4 +1,5 @@
 .env
 /build
+/cppexamples
 lib/
 .vscode
