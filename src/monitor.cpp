@@ -5,6 +5,10 @@
 
 #ifdef _WIN32
 
+void ProcessMonitor::setDebugMode(bool debug) {
+    debugMode = debug;
+}
+
 bool ProcessMonitor::searchForFLStudio() {
     // Create snapshot of all processes
     HANDLE hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
@@ -54,7 +58,9 @@ bool ProcessMonitor::searchForFLStudio() {
             processName == "flstudio" ||
             (processName.find("fl") == 0 && processName.find("studio") != std::string::npos)) {
             
-            std::cout << "🎵 Found FL Studio process: " << processName << std::endl;
+            if (debugMode) {
+                std::cout << "🎵 Found FL Studio process: " << processName << std::endl;
+            }
             CloseHandle(hProcessSnap);
             return true;
         }

@@ -4,6 +4,7 @@
 class ConfigLoader {
     private:
         nlohmann::json config;
+        bool debugMode = false;
         std::string findProjectRoot() const;
         std::string findEnvFile(const std::string& filename) const;
 
@@ -11,6 +12,7 @@ class ConfigLoader {
         ConfigLoader();
 
         bool loadEnvFile(const std::string& filename);
+        void setDebugMode(bool debug);
 
         std::string getString(const std::string& key, const std::string& defaultValue = "") const;
         int getInt(const std::string& key, int defaultValue = 0) const;

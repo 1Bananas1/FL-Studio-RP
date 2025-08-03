@@ -56,7 +56,9 @@ bool ConfigLoader::loadEnvFile(const std::string& filename) {
         return false;
     }
 
-    std::cout << "Loading environment variables from: " << actualPath << std::endl;
+    if (debugMode) {
+        std::cout << "Loading environment variables from: " << actualPath << std::endl;
+    }
 
     std::string line;
     while (std::getline(file, line)) {
@@ -115,7 +117,13 @@ bool ConfigLoader::getBool(const std::string& key, bool defaultValue) const {
     return defaultValue;
 }
 
+void ConfigLoader::setDebugMode(bool debug) {
+    debugMode = debug;
+}
+
 void ConfigLoader::printAll() const {
-    std::cout << "Configuration:" << std::endl;
-    std::cout << config.dump(2) << std::endl;
+    if (debugMode) {
+        std::cout << "Configuration:" << std::endl;
+        std::cout << config.dump(2) << std::endl;
+    }
 }
