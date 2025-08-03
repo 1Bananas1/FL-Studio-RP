@@ -11,7 +11,7 @@
 int main() {
     // Static Discord RPC instance - persists across function calls
     static DiscordRPC* discord = nullptr;
-    static std::string discordId = "";
+    static std::string discordId = "1396127471342194719";
     static long long sessionStartTime = 0;
     
     // Load configuration
@@ -21,7 +21,6 @@ int main() {
 
     ConfigLoader config;
     if (config.loadEnvFile(".env")) {
-        discordId = config.getString("DISCORD_APPLICATION_ID", "NOT_FOUND");
         stateFile = config.getString("STATE_FILE_PATH", "NOT_FOUND");
         pollInterval = config.getInt("POLL_INTERVAL_MS", 999);
         debugMode = config.getBool("DEBUG_MODE", false);
