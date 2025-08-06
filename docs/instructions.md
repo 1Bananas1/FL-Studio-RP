@@ -16,5 +16,6 @@
 1. Go into your FL Studio MIDI Settingss
 2. In the output section, **disable** `Send Master Sync`
 3. In the input section, for controller type, select `FLRP Script`
+4. Set both ports to `0`
 
 ### Note: do not use discord_client.py, while it does work, this was purely used as a reference file

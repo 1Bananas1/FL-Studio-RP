@@ -9,6 +9,7 @@ add_executable(FLRP
     src/parser.cpp
     src/discord_rp.cpp
     src/main.cpp
+    public/app.rc
 )
 
 target_include_directories(FLRP PRIVATE src/ lib/)
