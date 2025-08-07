@@ -2,6 +2,8 @@
 #include "monitor.h"
 #include "parser.h"
 #include "discord_rp.h"
+#include "app_state.h"
+#include "tray.h"
 #include <iostream>
 #include <thread>
 #include <chrono>
@@ -13,6 +15,8 @@ int main() {
     static DiscordRPC* discord = nullptr;
     static std::string discordId = "1396127471342194719";
     static long long sessionStartTime = 0;
+    static bool shouldExit = false;
+    static bool userDisconnected = false;
     
     // Load configuration
     std::string stateFile = "Not_init";
@@ -52,18 +56,61 @@ int main() {
         return 1;
     }
 
+    // Initialize system tray
+    SystemTray tray;
+    if (!tray.initialize("E:\\coding projects\\FL Studio RP\\public\\FLRP.ico", "FL Studio Rich Presence")) {
+        std::cout << "❌ Failed to initialize system tray!" << std::endl;
+        if (debugMode) {
+            std::cout << "Continuing without system tray support..." << std::endl;
+        }
+    } else {
+        // Set up tray callbacks
+        tray.setRefreshConnectionCallback([&]() {
+            if (discord && discord->isConnected()) {
+                discord->disconnect();
+            }
+            userDisconnected = false; // Allow reconnection after refresh
+            if (debugMode) {
+                std::cout << "🔄 Refreshing Discord connection..." << std::endl;
+            }
+        });
+        
+        tray.setDisconnectCallback([&]() {
+            if (discord && discord->isConnected()) {
+                discord->clearActivity();
+                discord->disconnect();
+                userDisconnected = true; // Prevent automatic reconnection
+                if (debugMode) {
+                    std::cout << "🔌 Disconnected from Discord (user requested)" << std::endl;
+                }
+            }
+        });
+        
+        tray.setExitCallback([&]() {
+            shouldExit = true;
+            if (debugMode) {
+                std::cout << "🚪 Exit requested from system tray" << std::endl;
+            }
+        });
+        
+        tray.show();
+        if (debugMode) {
+            std::cout << "✅ System tray initialized" << std::endl;
+        }
+    }
+
     // Main monitoring loop
     ProcessMonitor monitor;
     monitor.setDebugMode(debugMode);
     
-    while (true) {
+    while (!shouldExit) {
         if (monitor.searchForFLStudio()) {
             if (debugMode) {
                 std::cout << "Found FL Studio running..." << std::endl;
             }
             
-            // If Discord client not initialized, create it
-            if (discord == nullptr) {
+            // If Discord client not initialized, create it (unless user disconnected)
+            if (discord == nullptr && !userDisconnected) {
                 discord = new DiscordRPC(discordId);
                 sessionStartTime = DiscordRPC::getCurrentTimestamp();
                 if (debugMode) {
@@ -72,7 +119,7 @@ int main() {
             }
             
             // If we are already connected
-            if (discord->isConnected()) {
+            if (discord && discord->isConnected()) {
                 // Get FL Studio data and update activity
                 FLStudioData data = FLParser::getData(stateFile);
                 
@@ -105,8 +152,8 @@ int main() {
                 }
                 }
                 
-            } else {
-                // Try to connect
+            } else if (discord && !userDisconnected) {
+                // Try to connect (only if user hasn't manually disconnected)
                 if (discord->connect()) {
                     if (debugMode) {
                         std::cout << "✅ Connected to Discord!" << std::endl;
@@ -140,6 +187,9 @@ int main() {
                 sessionStartTime = 0; // Reset timer for next session
             }
         }
+        
+        // Process tray messages
+        tray.processMessages();
         
         // Wait before next check
         std::this_thread::sleep_for(std::chrono::milliseconds(pollInterval));

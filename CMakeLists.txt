@@ -8,6 +8,8 @@ add_executable(FLRP
     src/monitor.cpp
     src/parser.cpp
     src/discord_rp.cpp
+    src/app_state.cpp
+    src/tray.cpp
     src/main.cpp
     public/app.rc
 )
