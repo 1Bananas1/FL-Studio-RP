@@ -37,7 +37,7 @@
 
 > A: Discord rate limits how often you can update this information, it is updating as fast as it can!
 
-**Q: My FL Studio is lags extremely after running the script!**
+**Q: My FL Studio experiences extreme lag after running the script!**
 
 > A: This is an easy fix! Go to your MIDI settings and disable `Send Master Sync`
 
