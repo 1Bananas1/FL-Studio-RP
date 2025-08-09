@@ -2,6 +2,7 @@
 #include <iostream>
 #include <sstream>
 #include <chrono>
+#include <vector>
 
 #ifdef _WIN32
 #include <io.h>
@@ -149,14 +150,11 @@ std::string DiscordRPC::readMessage() {
     }
     
     if (length > 0 && length < 65536) { // Sanity check
-        char* buffer = new char[length + 1];
-        if (ReadFile(pipe, buffer, length, &read, nullptr) && read == length) {
+        std::vector<char> buffer(length + 1);
+        if (ReadFile(pipe, buffer.data(), length, &read, nullptr) && read == length) {
             buffer[length] = '\0';
-            std::string result(buffer);
-            delete[] buffer;
-            return result;
+            return std::string(buffer.data());
         }
-        delete[] buffer;
     }
 #else
     if (read(sock, &opcode, sizeof(opcode)) != sizeof(opcode)) {
@@ -167,14 +165,11 @@ std::string DiscordRPC::readMessage() {
     }
     
     if (length > 0 && length < 65536) { // Sanity check
-        char* buffer = new char[length + 1];
-        if (read(sock, buffer, length) == static_cast<ssize_t>(length)) {
+        std::vector<char> buffer(length + 1);
+        if (read(sock, buffer.data(), length) == static_cast<ssize_t>(length)) {
             buffer[length] = '\0';
-            std::string result(buffer);
-            delete[] buffer;
-            return result;
+            return std::string(buffer.data());
         }
-        delete[] buffer;
     }
 #endif
     return "";
