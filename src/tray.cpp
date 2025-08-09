@@ -11,6 +11,7 @@ static SystemTray* g_trayInstance = nullptr;
 SystemTray::SystemTray() 
     : m_hwnd(nullptr)
     , m_contextMenu(nullptr)
+    , m_icon(nullptr)
     , m_isVisible(false) {
     
     // Initialize NOTIFYICONDATA structure
@@ -24,6 +25,11 @@ SystemTray::SystemTray()
 
 SystemTray::~SystemTray() {
     hide();
+    
+    if (m_icon) {
+        DestroyIcon(m_icon);
+        m_icon = nullptr;
+    }
     
     if (m_contextMenu) {
         DestroyMenu(m_contextMenu);
@@ -46,19 +52,19 @@ bool SystemTray::initialize(const std::string& iconPath, const std::string& tool
     }
     
     // Load icon from file
-    HICON icon = (HICON)LoadImageA(nullptr, iconPath.c_str(), IMAGE_ICON, 
-                                   GetSystemMetrics(SM_CXSMICON), 
-                                   GetSystemMetrics(SM_CYSMICON), 
-                                   LR_LOADFROMFILE);
+    m_icon = (HICON)LoadImageA(nullptr, iconPath.c_str(), IMAGE_ICON, 
+                               GetSystemMetrics(SM_CXSMICON), 
+                               GetSystemMetrics(SM_CYSMICON), 
+                               LR_LOADFROMFILE);
     
-    if (!icon) {
+    if (!m_icon) {
         std::cerr << "Failed to load icon from: " << iconPath << std::endl;
         return false;
     }
     
     // Setup tray icon data
     m_notifyIconData.hWnd = m_hwnd;
-    m_notifyIconData.hIcon = icon;
+    m_notifyIconData.hIcon = m_icon;
     strcpy_s(m_notifyIconData.szTip, sizeof(m_notifyIconData.szTip), tooltip.c_str());
     
     // Create context menu

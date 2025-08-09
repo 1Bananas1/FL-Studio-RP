@@ -8,11 +8,12 @@
 #include <thread>
 #include <chrono>
 #include <algorithm>
+#include <memory>
 
 
 int main() {
-    // Static Discord RPC instance - persists across function calls
-    static DiscordRPC* discord = nullptr;
+    // Discord RPC instance - managed with smart pointer
+    static std::unique_ptr<DiscordRPC> discord = nullptr;
     static std::string discordId = "1396127471342194719";
     static long long sessionStartTime = 0;
     static bool shouldExit = false;
@@ -111,7 +112,7 @@ int main() {
             
             // If Discord client not initialized, create it (unless user disconnected)
             if (discord == nullptr && !userDisconnected) {
-                discord = new DiscordRPC(discordId);
+                discord = std::make_unique<DiscordRPC>(discordId);
                 sessionStartTime = DiscordRPC::getCurrentTimestamp();
                 if (debugMode) {
                     std::cout << "Initialized Discord RPC client" << std::endl;
@@ -195,10 +196,8 @@ int main() {
         std::this_thread::sleep_for(std::chrono::milliseconds(pollInterval));
     }
     
-    // Cleanup
-    if (discord != nullptr) {
-        delete discord;
-    }
+    // Cleanup - smart pointer automatically handles deallocation
+    discord.reset();
 
     
 }

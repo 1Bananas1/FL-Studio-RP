@@ -17,6 +17,7 @@ class SystemTray {
         HWND m_hwnd;
         NOTIFYICONDATA m_notifyIconData;
         HMENU m_contextMenu;
+        HICON m_icon;
         bool m_isVisible;
 
         // Callback functions

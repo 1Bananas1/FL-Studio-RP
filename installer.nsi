@@ -4,7 +4,6 @@
 !include "MUI2.nsh"
 !include "FileFunc.nsh"
 !include "LogicLib.nsh"
-
 ; Installer Information
 Name "FL Studio Rich Presence"
 OutFile "FLRP_Installer.exe"
@@ -18,14 +17,15 @@ RequestExecutionLevel admin
 !define MUI_ABORTWARNING
 !define MUI_ICON "public\FLRP.ico"
 !define MUI_UNICON "public\FLRP.ico"
+!define MUI_BGCOLOR "5865f2"
 
 ; Pages
 !insertmacro MUI_PAGE_WELCOME
-;!insertmacro MUI_PAGE_LICENSE "LICENSE" ; Add if you have a license file
 !insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_DIRECTORY
 Page custom FLStudioPathPage
 !insertmacro MUI_PAGE_INSTFILES
+Page custom FinalInstructionsPage
 !insertmacro MUI_PAGE_FINISH
 
 !insertmacro MUI_UNPAGE_WELCOME
@@ -72,7 +72,7 @@ FunctionEnd
 Function DetectFLStudio
     StrCpy $FLStudioFound "0"
     
-    ; Check FL Studio path from shared registry (works for all versions)
+    ; Check FL Studio path from shared registry (works for all versions sonetimes)
     ReadRegStr $0 HKLM "SOFTWARE\Image-Line\Shared\Paths" "Install path"
     ${If} $0 != ""
         StrCpy $FLStudioPath $0
@@ -80,7 +80,7 @@ Function DetectFLStudio
         Goto found
     ${EndIf}
     
-    ; Check for FL Studio 25.1 registration (your version)
+    ; Current Version FL Studio
     ReadRegStr $0 HKLM "SOFTWARE\Image-Line\Registrations\FL Studio 25.1" ""
     ${If} $0 != ""
         ; Registry key exists, check default path
@@ -127,8 +127,8 @@ Function DetectFLStudio
     
     found:
     ${If} $FLStudioFound == "1"
-        ; Construct script path
-        StrCpy $FLScriptPath "$PROFILE\Documents\Image-Line\FL Studio\Settings\Hardware"
+        ; Construct script path with FLRP subfolder
+        StrCpy $FLScriptPath "$PROFILE\Documents\Image-Line\FL Studio\Settings\Hardware\FLRP"
         
         ; Create directory if it doesn't exist
         CreateDirectory $FLScriptPath
@@ -161,6 +161,13 @@ Function CheckVirtualMIDI
     ${EndIf}
 FunctionEnd
 
+; Final configuration instructions page
+Function FinalInstructionsPage
+    ${If} $FLStudioFound == "1"
+        MessageBox MB_ICONINFORMATION "FL Studio Configuration Required$\n$\nTo complete setup, please configure FL Studio:$\n$\n1. Open FL Studio$\n2. Go to Options > MIDI Settings$\n3. Find your virtual MIDI port (e.g., 'FLRP')$\n4. Set the SAME NUMBER for both Input and Output$\n5. Set Controller Type to 'FLRP Script'$\n6. Turn OFF 'Send Master Sync' for this port$\n7. Click Apply$\n$\nThis ensures proper communication between FL Studio and the Rich Presence application."
+    ${EndIf}
+FunctionEnd
+
 ; Installation Sections
 Section "Main Application" SecMain
     SectionIn RO ; Required section
@@ -174,12 +181,12 @@ Section "Main Application" SecMain
     ; Create .env file with state file path (points to where Python script creates JSON)
     ${If} $FLStudioFound == "1"
         FileOpen $1 "$INSTDIR\.env" w
-        FileWrite $1 "STATE_FILE_PATH=$FLScriptPath\FLRP\fl_studio_state.json$\r$\n"
+        FileWrite $1 "STATE_FILE_PATH=$FLScriptPath\fl_studio_state.json$\r$\n"
         FileWrite $1 "DISCORD_CLIENT_ID=1234567890123456789$\r$\n"
         FileWrite $1 "DEBUG_MODE=false$\r$\n"
         FileWrite $1 "POLL_INTERVAL_MS=1000$\r$\n"
         FileClose $1
-        DetailPrint "Created .env file with state file path: $FLScriptPath\FLRP\fl_studio_state.json"
+        DetailPrint "Created .env file with state file path: $FLScriptPath\fl_studio_state.json"
     ${Else}
         ; Create .env file with default state file path if FL Studio not found
         FileOpen $1 "$INSTDIR\.env" w
@@ -248,8 +255,10 @@ Section "Uninstall"
     Delete "$INSTDIR\Uninstall.exe"
     RMDir "$INSTDIR"
     
-    ; Remove FL Studio script
-    Delete "$PROFILE\Documents\Image-Line\FL Studio\Settings\Hardware\device_FLRP.py"
+    ; Remove FL Studio script and folder
+    Delete "$PROFILE\Documents\Image-Line\FL Studio\Settings\Hardware\FLRP\device_FLRP.py"
+    Delete "$PROFILE\Documents\Image-Line\FL Studio\Settings\Hardware\FLRP\fl_studio_state.json"
+    RMDir "$PROFILE\Documents\Image-Line\FL Studio\Settings\Hardware\FLRP"
     
     ; Remove shortcuts
     Delete "$DESKTOP\FL Studio Rich Presence.lnk"
