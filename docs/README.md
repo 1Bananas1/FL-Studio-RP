@@ -44,3 +44,11 @@
 **Q: Can I use this while using an actual MIDI keyboard?**
 
 > A: While I haven't tested this, if you can get me the python script that your controller uses, I **might** be able to work something out! You can find the folders here: `C:\Users\<USER NAME>\Documents\Image-Line\FL Studio\Settings\Hardware`.
+
+**Q: I'm getting a state file not found error**
+
+> A: In order to initialize, you first need to run the python script inside of FL Studio, then you can launch FLRP!
+
+**Q: It's saying that my .env file cannot be found?**
+
+> A: Try starting the exe from the "C:\Program Files (x86)\FL Studio Rich Presence" folder!
