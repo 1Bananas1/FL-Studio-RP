@@ -9,6 +9,8 @@
 #include <chrono>
 #include <algorithm>
 #include <memory>
+#include <filesystem>
+#include <windows.h>
 
 
 int main() {
@@ -57,9 +59,15 @@ int main() {
         return 1;
     }
 
+    // Get executable directory and build icon path
+    char exePath[MAX_PATH];
+    GetModuleFileNameA(nullptr, exePath, MAX_PATH);
+    std::filesystem::path executableDir = std::filesystem::path(exePath).parent_path();
+    std::string iconPath = (executableDir / "FLRP.ico").string();
+    
     // Initialize system tray
     SystemTray tray;
-    if (!tray.initialize("E:\\coding projects\\FL Studio RP\\public\\FLRP.ico", "FL Studio Rich Presence")) {
+    if (!tray.initialize(iconPath, "FL Studio Rich Presence")) {
         std::cout << "❌ Failed to initialize system tray!" << std::endl;
         if (debugMode) {
             std::cout << "Continuing without system tray support..." << std::endl;
