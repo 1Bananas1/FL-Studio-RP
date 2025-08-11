@@ -3,6 +3,7 @@
 #include <iostream>
 #include <vector>
 #include <fstream>
+#include <windows.h>
 
 ConfigLoader::ConfigLoader() {
     
@@ -28,17 +29,40 @@ std::string ConfigLoader::findProjectRoot() const {
  }
 
 std::string ConfigLoader::findEnvFile(const std::string& filename) const {
-
-    if (std::filesystem::exists(filename)) {
-        return filename;
+    // Search locations in order of priority
+    std::vector<std::filesystem::path> searchPaths;
+    
+    // 1. Current working directory
+    searchPaths.push_back(std::filesystem::current_path() / filename);
+    
+    // 2. Executable directory (most important for Start Menu launches)
+    char exePath[MAX_PATH];
+    if (GetModuleFileNameA(nullptr, exePath, MAX_PATH) != 0) {
+        std::filesystem::path executableDir = std::filesystem::path(exePath).parent_path();
+        searchPaths.push_back(executableDir / filename);
     }
-
+    
+    // 3. Project root directory
     std::string projectRoot = findProjectRoot();
-    std::string envPath = projectRoot + "/" + filename;
-    if (std::filesystem::exists(envPath)) {
-        return envPath;
+    searchPaths.push_back(std::filesystem::path(projectRoot) / filename);
+    
+    // Try each location
+    for (const auto& path : searchPaths) {
+        if (debugMode) {
+            std::cout << "Searching for .env at: " << path.string() << std::endl;
+        }
+        if (std::filesystem::exists(path)) {
+            if (debugMode) {
+                std::cout << "Found .env at: " << path.string() << std::endl;
+            }
+            return path.string();
+        }
     }
-
+    
+    // Not found anywhere
+    if (debugMode) {
+        std::cout << "Environment file '" << filename << "' not found in any search location." << std::endl;
+    }
     return "";
 }
 
