@@ -158,9 +158,10 @@ class MidiControllerConfig:
         
         self.getState()
         
-        # Update plugin info when idle
-        if self._ActiveState == self._PossibleStates[0] and self.getFocusedPlugin() != "":
-            self._ActivePlugin = self.getFocusedPlugin()
+        # Always update plugin info when a plugin is focused
+        focused_plugin = self.getFocusedPlugin()
+        if focused_plugin != "":
+            self._ActivePlugin = focused_plugin
         
         # Write state file if anything changed OR every 5 seconds to keep it fresh
         current_time = time.time()
