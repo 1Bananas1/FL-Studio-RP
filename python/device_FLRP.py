@@ -20,6 +20,9 @@ import midi
 import utils
 import subprocess
 
+# Store the initial working directory to avoid issues with FL Studio changing the CWD
+BASE_DIR = os.path.abspath(os.getcwd())
+
 class MidiControllerConfig:
     def __init__(self):
         self._PossibleStates = ['Idle', 'Recording', 'Listening', 'Composing']
@@ -30,8 +33,8 @@ class MidiControllerConfig:
         self.last_sync_time = time.time()
         self.session_start_time = int(time.time())
         
-        # Simplified approach - just use the default location that we know works
-        self.state_file_path = "fl_studio_state.json"  # FL Studio script directory
+        # Use absolute path based on initial working directory
+        self.state_file_path = os.path.join(BASE_DIR, "fl_studio_state.json")
         self.tried_paths = []
         
         print("FL Studio Rich Presence instance created.")
@@ -129,8 +132,9 @@ class MidiControllerConfig:
         print("🔄 Reinitializing file path...")
         old_path = self.state_file_path
         
-        # Test locations again
+        # Test locations again - now using BASE_DIR as primary fallback
         test_locations = [
+            os.path.join(BASE_DIR, "fl_studio_state.json"),  # Use our stored base directory first
             os.path.join(os.environ.get('TEMP', 'C:\\temp'), "fl_studio_state.json"),
             "C:\\temp\\fl_studio_state.json",
             os.path.join(os.path.expanduser("~"), "fl_studio_state.json"),
