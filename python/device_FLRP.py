@@ -158,9 +158,8 @@ class MidiControllerConfig:
         
         self.getState()
         
-        # Update plugin info when idle
-        if self._ActiveState == self._PossibleStates[0] and self.getFocusedPlugin() != "":
-            self._ActivePlugin = self.getFocusedPlugin()
+        # Always update plugin info - set to current focused plugin or empty if none
+        self._ActivePlugin = self.getFocusedPlugin()
         
         # Write state file if anything changed OR every 5 seconds to keep it fresh
         current_time = time.time()
@@ -184,7 +183,22 @@ class MidiControllerConfig:
         self._BPM = mixer.getCurrentTempo(1) 
         
     def getFocusedPlugin(self):
-        return ui.getFocusedPluginName()
+        # First try to get the focused plugin window
+        plugin_name = ui.getFocusedPluginName()
+        
+        # If no focused plugin but we're in Piano Roll, get the current channel's plugin
+        if not plugin_name and ui.getFocused(3):  # Piano Roll focused
+            try:
+                current_channel = channels.channelNumber()
+                if current_channel >= 0:
+                    channel_name = channels.getChannelName(current_channel)
+                    # Only return if it looks like a plugin (not a sample)
+                    if channel_name and not any(ext in channel_name.lower() for ext in ['.wav', '.mp3', '.flac', '.ogg', '.aiff']):
+                        plugin_name = channel_name
+            except:
+                pass
+        
+        return plugin_name if plugin_name else ""
 
     def getState(self):
         if transport.isRecording():
