@@ -13,7 +13,7 @@
 #include <windows.h>
 
 
-int main() {
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd) {
     // Discord RPC instance - managed with smart pointer
     static std::unique_ptr<DiscordRPC> discord = nullptr;
     static std::string discordId = "1396127471342194719";
@@ -32,6 +32,22 @@ int main() {
         pollInterval = config.getInt("POLL_INTERVAL_MS", 999);
         debugMode = config.getBool("DEBUG_MODE", false);
         config.setDebugMode(debugMode);
+        
+        // Allocate console only in debug mode
+        if (debugMode) {
+            AllocConsole();
+            freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
+            freopen_s((FILE**)stderr, "CONOUT$", "w", stderr);
+            freopen_s((FILE**)stdin, "CONIN$", "r", stdin);
+            std::ios::sync_with_stdio(true);
+            std::wcout.clear();
+            std::cout.clear();
+            std::wcerr.clear();
+            std::cerr.clear();
+            std::wcin.clear();
+            std::cin.clear();
+        }
+        
         if (debugMode) {
             std::cout << "\n📋 Configuration Values:" << std::endl;
             std::cout << "  DISCORD_APPLICATION_ID: " << discordId << std::endl;
@@ -40,9 +56,10 @@ int main() {
             std::cout << "  DEBUG_MODE: " << (debugMode ? "true" : "false") << std::endl;
         }
     } else {
-        std::cout << "❌ Failed to load .env file!" << std::endl;
-        std::cout << "Press Enter to exit..." << std::endl;
-        std::cin.get();
+        if (debugMode) {
+            std::cout << "❌ Failed to load .env file!" << std::endl;
+        }
+        MessageBox(NULL, "Failed to load .env file! Please reinstall the application.", "FL Studio Rich Presence", MB_ICONERROR);
         return 1;
     }
 
@@ -52,11 +69,14 @@ int main() {
             std::cout << "✅ State file found!" << std::endl;
         }
     } else {
-        std::cout << "❌ State file not found!" << std::endl;
-        std::cout << "Make sure FL Studio is running and the script is active." << std::endl;
-        std::cout << "Press Enter to exit..." << std::endl;
-        std::cin.get();
-        return 1;
+        if (debugMode) {
+            std::cout << "❌ State file not found!" << std::endl;
+            std::cout << "Make sure FL Studio is running and the script is active." << std::endl;
+        }
+        // Don't exit immediately - let it run and wait for FL Studio to start
+        if (debugMode) {
+            std::cout << "Waiting for FL Studio to start..." << std::endl;
+        }
     }
 
     // Get executable directory and build icon path
@@ -68,9 +88,14 @@ int main() {
     // Initialize system tray
     SystemTray tray;
     if (!tray.initialize(iconPath, "FL Studio Rich Presence")) {
-        std::cout << "❌ Failed to initialize system tray!" << std::endl;
         if (debugMode) {
+            std::cout << "❌ Failed to initialize system tray!" << std::endl;
             std::cout << "Continuing without system tray support..." << std::endl;
+        }
+        // In non-debug mode, show error and exit since tray is essential for GUI-less app
+        if (!debugMode) {
+            MessageBox(NULL, "Failed to initialize system tray! The application will exit.", "FL Studio Rich Presence", MB_ICONERROR);
+            return 1;
         }
     } else {
         // Set up tray callbacks
@@ -206,6 +231,6 @@ int main() {
     
     // Cleanup - smart pointer automatically handles deallocation
     discord.reset();
-
     
+    return 0;
 }

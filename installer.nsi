@@ -238,12 +238,19 @@ Section "Start Menu Shortcut" SecStartMenu
     CreateShortCut "$SMPROGRAMS\FL Studio Rich Presence\Uninstall.lnk" "$INSTDIR\Uninstall.exe"
 SectionEnd
 
+Section "Launch on Startup" SecStartup
+    ; Add to Windows startup registry - low priority
+    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "FL Studio Rich Presence" "$INSTDIR\FLRP.exe"
+    DetailPrint "Added FL Studio Rich Presence to Windows startup"
+SectionEnd
+
 ; Section Descriptions
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
   !insertmacro MUI_DESCRIPTION_TEXT ${SecMain} "Core application files (required)"
   !insertmacro MUI_DESCRIPTION_TEXT ${SecFLStudio} "Installs FL Studio integration script"
   !insertmacro MUI_DESCRIPTION_TEXT ${SecDesktop} "Creates desktop shortcut"
   !insertmacro MUI_DESCRIPTION_TEXT ${SecStartMenu} "Creates Start Menu shortcuts"
+  !insertmacro MUI_DESCRIPTION_TEXT ${SecStartup} "Launch automatically when Windows starts"
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 ; Uninstaller
@@ -265,6 +272,9 @@ Section "Uninstall"
     Delete "$SMPROGRAMS\FL Studio Rich Presence\FL Studio Rich Presence.lnk"
     Delete "$SMPROGRAMS\FL Studio Rich Presence\Uninstall.lnk"
     RMDir "$SMPROGRAMS\FL Studio Rich Presence"
+    
+    ; Remove startup registry entry
+    DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "FL Studio Rich Presence"
     
     ; Remove registry entries
     DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\FL Studio Rich Presence"

@@ -3,7 +3,7 @@ project(FLRP)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(FLRP
+add_executable(FLRP WIN32
     src/config.cpp
     src/monitor.cpp
     src/parser.cpp
